@@ -12,6 +12,7 @@ fastapi = "^0.115.5"
 uvicorn = {extras = ["standard"], version = "^0.32.0"}
 pydantic = "^2.9.2"
 python-dotenv = "^1.0.1"
+spotipy = "^2.24.0"
 
 [tool.poetry.scripts] 
 say_hello = "app.commands.say_hello:main" 
