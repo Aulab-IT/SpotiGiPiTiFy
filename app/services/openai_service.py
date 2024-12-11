@@ -6,6 +6,14 @@ from pydantic import BaseModel
 
 load_dotenv()
 
+
+class SpotifyTrackPydantic(BaseModel):
+    uri : str
+    name : str
+    artist : str
+    album : str
+    spotify_external_url : str
+
 class SpotifyTrack():
     def __init__(self, uri, name, artist, album):
         self.uri = uri
@@ -47,25 +55,57 @@ tools = [
             "description": "Get the playlists of the user"
         }
     },
-    openai.pydantic_function_tool(Playlist, name="create_playlist" , description="Create a playlist for the user")
+    {
+        "type": "function",
+        "function":  {
+            "name": "search_track_by_name",
+            "description": "Search for a track by name and artist in spotify",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "artist": {
+                        "type": "string",
+                        "description": "Name of the artist"
+                    },
+                    "track_name": {
+                        "type": "string",
+                        "description": "Name of the track"
+                    }
+                },
+                "required": [
+                    "artist",
+                    "track_name"
+                ]
+            }
+        }  
+    },
+    openai.pydantic_function_tool(Playlist, name="show_playlist_to_user" , description="Use this to show the playlist to the user"),
+    # openai.pydantic_function_tool(Playlist, name="add_playlist_to_spotify" , description="Use this to add the playlist to spotify"),
+
+
 
 ]
 
 GPT_MODEL = "gpt-4o"
 
+# ASSISTANT_SYSTEM_PROMPT = """
+#     Sei un assistente che aiuta a creare playlist su spotify. Il tuo compito è capire l'umore dell'utente e in base a quello generare una playlist corrispettiva dell'umore dell'utente. Per capire l'umore dell'utente inizia facendo 5 domande in una conversazione naturale.
+
+#     Crea una playlist con almeno 3 differenti artisti.
+#     La playlist deve essere di almeno 10 canzoni.
+
+#     Devi seguire queste istruzioni per creare una playlist dell'utente:
+#         - Capire l'umore dell'utente.
+#         - Generare una playlist corrispettiva dell'umore dell'utente.
+#         - Mostrare all'utente la lista delle canzoni della playlist creata.
+#         - Chiedere all'utente se vuole aggiungere delle canzoni alla playlist.
+#         - Chiedere all'utente se vuole aggiungere un nome alla playlist.
+#         - Chiedere conferma all'utente di aggiungere la playlist su spotify.
+#         - Aggiungere la playlist su spotify.
+# """
 ASSISTANT_SYSTEM_PROMPT = """
-    Sei un assistente che aiuta a creare playlist su spotify. Il tuo compito è capire l'umore dell'utente e in base a quello generare una playlist corrispettiva dell'umore dell'utente. Per capire l'umore dell'utente inizia facendo 5 domande in una conversazione naturale.
-
-    Crea una playlist con almeno 3 differenti artisti.
-    La playlist deve essere di almeno 10 canzoni.
-
-    Devi seguire queste istruzioni per risolvere il problema dell'utente:
-        - Capire l'umore dell'utente.
-        - Generare una playlist corrispettiva dell'umore dell'utente.
-        - Chiedere all'utente se vuole aggiungere delle canzoni alla playlist.
-        - Chiedere all'utente se vuole aggiungere un nome alla playlist.
-        - Aggiungere la playlist su spotify.
-    """
+    Sei un assistente virtuale che cerca canzoni per l'utente su spotify.
+"""
 
 class OpenAIService():
     client = None
@@ -146,9 +186,9 @@ class OpenAIService():
                     }
                 )
 
-            elif function_name == "create_playlist":
+            elif function_name == "add_playlist_to_spotify":
                 resolved = False
-                print("Executing 'create_playlist'")
+                print("Executing 'add_playlist_to_spotify'")
 
                 print("##########")
                 print("Argument:" , arguments)
@@ -158,12 +198,17 @@ class OpenAIService():
                 for t in arguments["tracks"]:
                     # try:
                 
-                    search_q = "{} artist {}".format(t['name'], t['artist'])
+                    search_q = f"remaster%2520track%3A{t['name']}%2520artist:{t['artist']}"
+                    # remaster%2520track%3ADoxy%2520artist%3AMiles%2520Davis
                     r = Spotify().sp.search(
                         q = search_q,
                         type = "track",
-                        limit = 1
+                        limit = 10
                     )
+
+                    print("###########################")
+                    print(r)
+                    print("###########################")
                     
                     item = r['tracks']['items'][0]  # Select the first track
                     track = SpotifyTrack(
@@ -192,28 +237,58 @@ class OpenAIService():
                     }
                 )
 
+            elif function_name == "show_playlist_to_user":
+                resolved = True
+
+                messages.append(
+                    {
+                        "tool_call_id": function_id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": json.dumps(arguments)
+                    }
+                )
+
+            elif function_name == "search_track_by_name":
+                resolved = False
+
+                artist = arguments["artist"]
+                track_name = arguments["track_name"]
+
+                search_q = f"remaster%2520track%3A{track_name}%2520artist:{artist}"
+                    # remaster%2520track%3ADoxy%2520artist%3AMiles%2520Davis
+                r = Spotify().sp.search(
+                    q = search_q,
+                    type = "track",
+                    limit = 5
+                )
+
+                completion = self.client.beta.chat.completions.parse(
+                    model="gpt-4o-2024-08-06",
+                    messages=[
+                        {"role": "system", "content": "Data la seguente risposta da un'api di spotify seleziona la traccia corretta. Spotify API Response : \n" + json.dumps(r)}
+                    ],
+                    response_format=SpotifyTrackPydantic,
+                )
+
+                print("###########################")
+                print(completion)   
+                print("###########################")
+
+                messages.append(
+                    {
+                        "tool_call_id": function_id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": json.dumps(completion.choices[0].message.content)
+                    }
+                )
+
+
+
         # print(f"Resolved: {resolved}, Messages: {messages}")
         return (resolved, messages)
 
-
-    def get_completion(self , model , messages):
-        SYSTEM_PROMPT = {"role": "system", "content": "Sei un assistente che aiuta a creare playlist su spotify. Il tuo compito è capire l'umore dell'utente e in base a quello generare una playlist corrispettiva dell'umore dell'utente. Per capire l'umore dell'utente inizia facendo 5 domande in una conversazione naturale."}
-
-        # Aggiungo il prompt di sistema come primo messaggio 
-
-        clonedMessages = [SYSTEM_PROMPT] + messages.copy()
-
-
-
-        response = self.client.chat.completions.create(
-            model = model,
-            messages = clonedMessages,
-            tools = tools
-        )
-
-        messages.append(response.choices[0].message)
-
-        return messages
 
 
 
