@@ -132,6 +132,9 @@ class AgentService():
 
                 case "create_or_update_playlist":
                     pass
+                    # TODO : impostiamo self.playlist con il contenuto di arguments che sara' la playlist con i brani 
+
+                    # TODO: impostiamo come content un semplice messaggio di risposta.
 
                 case "search_track_by_name_with_spotify_api":
                     pass
@@ -140,10 +143,12 @@ class AgentService():
                     # TODO: creiamo la query per la ricerca su spotify
                     # remaster%2520track%3A{Doxy}%2520artist%3A{Miles Davis}
 
-                    # TODO: eseguiamo la ricerca su spotify mandando i seguenti argomenti : 
+                    # TODO: eseguiamo la ricerca su spotify mandando i seguenti argomenti 
                     # q = query
                     # type = track
                     # limit = 5
+
+                    
 
                     # TODO: chiediamo a GPT di selezionare la traccia corretta e impostiamo il modello della risposta come oggetto SpotifyTrack
 
