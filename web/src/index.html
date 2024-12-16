@@ -5,32 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SpotiGiPify</title>
 
-    <link href="../dist/output.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <link href="./compiled.css" rel="stylesheet">
   </head>
-  <body class="dark bg-spotify-background flex "> 
-    <div class="max-w-2xl w-full mx-auto h-screen flex flex-col justify-between px-2 pb-8">
-      <h1 class="text-3xl text-white mt-8">Crea la tua playlist con GPT</h1>
-
-      <div id="playlist-response" class="flex-1 w-full overflow-y-auto overflow-x-hidden bg-slate-200 dark:bg-spotify-dark-grey rounded-lg mt-8 px-2">
-
-
-      </div>
-    </div>
+  <body class="dark flex bg-hero bg-cover bg-center"> 
     <div class="max-w-2xl w-full mx-auto h-screen flex flex-col justify-between">
-      <div id="response" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-200 dark:bg-spotify-dark-grey rounded-lg mt-8 px-2">
+      <h1 class="text-3xl text-white mt-8">Crea la tua playlist con GPT</h1>
+      <div id="response" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-200 dark:bg-spotify-dark-grey dark:bg-opacity-40 backdrop-blur-sm rounded-lg mt-8 px-2">
 
 
       </div>
       <form id="chatForm" class="pb-8 pt-4">
         <label for="chat" class="sr-only">Your message</label>
-        <div class="flex items-center py-2 px-3 bg-gray-50 rounded-lg dark:bg-spotify-dark-grey">
+        <div class="flex items-center py-2 px-3 bg-gray-50 rounded-lg dark:bg-spotify-dark-grey dark:bg-opacity-50 backdrop-blur-sm">
             <textarea id="message" rows="1" class="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-aulab-yellow focus:border-aulab-yellow dark:bg-spotify-grey dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-aulab-yellow dark:focus:border-aulab-yellow" placeholder="Your message..."></textarea>
               <button type="submit" class="inline-flex justify-center p-2 text-aulab-yellow rounded-full cursor-pointer hover:bg-blue-100 dark:text-aulab-yellow dark:hover:bg-gray-600">
                 <svg class="w-6 h-6 rotate-90" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
             </button>
         </div>
     </form>
-  </div>
+    </div>
+    <div class="max-w-2xl w-full mx-auto h-screen flex flex-col justify-between px-2 pb-8">
+
+
+      <div  class="flex-1 w-full overflow-y-auto overflow-x-hidden bg-slate-200 dark:bg-spotify-dark-grey dark:bg-opacity-40 backdrop-blur-sm rounded-lg mt-8 px-2">
+        <div class="flex items-end gap-2.5 my-2">
+          <div class="flex flex-col gap-1 w-full">
+               <div class="flex flex-col w-full leading-1.5 p-4 ">
+                   <div class="flex items-center justify-between space-x-2 rtl:space-x-reverse mb-2">
+                       <h2 id="playlistName" class="text-xl font-semibold text-gray-900 dark:text-white"></h2>
+                       <button id="savePlaylistBtn" type="button" class="focus:outline-none text-white bg-spotify-green hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-spotify-green hidden">
+                        Save Playlist 
+                       </button>
+
+       
+                   </div>
+                   <div id="playlistTracks" class="my-2.5 flex flex-col gap-3">
+
+                   </div>
+               </div>
+          </div>
+       </div>
+
+      </div>
+    </div>
+
   
     <script src="https://unpkg.com/flowbite@1.4.0/dist/flowbite.js"></script>
     <script type="module" src="./script.js"></script>

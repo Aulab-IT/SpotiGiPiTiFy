@@ -8,6 +8,9 @@ class SpotifyAssistantRequest(BaseModel):
     messages : list
     playlist : dict
 
+class SavePlaylistRequest(BaseModel):
+    playlist : dict
+
 
 @router.post("/spotify-assistant")
 def spotify_assistant(request : SpotifyAssistantRequest):
@@ -21,6 +24,19 @@ def spotify_assistant(request : SpotifyAssistantRequest):
 
     return response
 
+@router.post("/save-playlist")
+def save_playlist(request : SavePlaylistRequest):
+    sp = Spotify()
+
+    playlist = request.playlist
+
+    result = sp.save_playlist(
+        name = playlist['name'],
+        playlist = playlist['tracks']
+    )
+
+    return result
+
 @router.post("/test/search")
 def search():
     search_q = "{} artist {}".format('Enter Sandman', "Metallica")
@@ -29,10 +45,6 @@ def search():
         type = "track",
         limit = 1
     )
-
-    print("###########################")
-    print(r)
-    print("###########################")
 
     return r
 

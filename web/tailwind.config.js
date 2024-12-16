@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Montserrat', 'sans-serif'],
+      },
       colors: {
         'spotify-green': '#1ED760',
         'spotify-black': '#181818',
@@ -15,6 +18,9 @@ module.exports = {
         'spotify-dark-grey': '#333333',
         'spotify-background': '#121212',
         'aulab-yellow': '#FFED00',
+      },
+      backgroundImage: {
+        'hero': "url('./media/background.jpeg')"
       }
     },
   },

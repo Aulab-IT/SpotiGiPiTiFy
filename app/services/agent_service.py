@@ -37,8 +37,8 @@ TOOLS = [
     {
         "type": "function",
         "function":  {
-            "name": "search_track_by_name",
-            "description": "Search for a track by name and artist in spotify",
+            "name": "search_track_by_name_with_spotify_api",
+            "description": "Search for a track by name and artist in spotify. You can use this function to search a track before adding it to the playlist.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -58,33 +58,15 @@ TOOLS = [
             }
         }  
     },
-    openai.pydantic_function_tool(Playlist, name="create_playlist" , description="Use this to create the playlist"),
+    openai.pydantic_function_tool(Playlist, name="create_or_update_playlist" , description="Use this function to create a playlist. Before using this function, use search_track_by_name_with_spotify_api to search a track to get track uri."),
     # openai.pydantic_function_tool(Playlist, name="add_playlist_to_spotify" , description="Use this to add the playlist to spotify"),
-
-
-
 ]
 
 GPT_MODEL = "gpt-4o"
 
-# ASSISTANT_SYSTEM_PROMPT = """
-#     Sei un assistente che aiuta a creare playlist su spotify. Il tuo compito è capire l'umore dell'utente e in base a quello generare una playlist corrispettiva dell'umore dell'utente. Per capire l'umore dell'utente inizia facendo 5 domande in una conversazione naturale.
-
-#     Crea una playlist con almeno 3 differenti artisti.
-#     La playlist deve essere di almeno 10 canzoni.
-
-#     Devi seguire queste istruzioni per creare una playlist dell'utente:
-#         - Capire l'umore dell'utente.
-#         - Generare una playlist corrispettiva dell'umore dell'utente.
-#         - Mostrare all'utente la lista delle canzoni della playlist creata.
-#         - Chiedere all'utente se vuole aggiungere delle canzoni alla playlist.
-#         - Chiedere all'utente se vuole aggiungere un nome alla playlist.
-#         - Chiedere conferma all'utente di aggiungere la playlist su spotify.
-#         - Aggiungere la playlist su spotify.
-# """
 ASSISTANT_SYSTEM_PROMPT = """
     Sei un assistente virtuale che cerca canzoni per l'utente su spotify.
-
+    Non usare il markdown per le risposte.
     Segui il seguente flusso per raccogliere le informazioni dell'utente:
 
     1. Scopo della playlist
@@ -105,7 +87,13 @@ ASSISTANT_SYSTEM_PROMPT = """
         Tempo totale desiderato (es. 30 minuti, 1 ora, 2 ore).
         Numero di brani (se preferito).
 
-    Dopo che hai raccolto tutti le preferenze dell'utente, usa la funzione "search_track_by_name" per cercare i brani e la funzione . 
+    Dopo che hai raccolto tutti le preferenze dell'utente, usa la funzione "search_track_by_name_with_spotify_api" per cercare i brani e la funzione "create_or_update_playlist" per generare la playlist. 
+
+    Puoi utilizzare la funzione create_or_update_playlist per generare la playlist o per modificare una esistente.
+
+    Se l'utente ti chiede di modificare / aggiungere brani alla playlist usa la funzione "create_or_update_playlist" prima di usare la funzione "speak_to_user"
+
+    La playlist attuale e' {playlist}
 
     E mostra la playlist all'utente con il tool "show_playlist_to_user"
 
@@ -131,7 +119,7 @@ class AgentService():
             messages = [
                 {
                     'role' : 'system',
-                    "content" : ASSISTANT_SYSTEM_PROMPT
+                    "content" : ASSISTANT_SYSTEM_PROMPT.format(playlist = self.playlist)
                 }
             ]
 
@@ -178,11 +166,6 @@ class AgentService():
 
                 case "add_playlist_to_spotify":
                     resolved = False
-                    print("Executing 'add_playlist_to_spotify'")
-
-                    print("##########")
-                    print("Argument:" , arguments)
-                    print("##########")
 
                     result = Spotify().save_playlist(
                         name = arguments['name'],
@@ -191,7 +174,7 @@ class AgentService():
 
                     content = json.dumps(result)
 
-                case "create_playlist":
+                case "create_or_update_playlist":
                     resolved = False
 
                     self.playlist = arguments
@@ -199,7 +182,7 @@ class AgentService():
                     content = json.dumps({"success": True})
 
 
-                case "search_track_by_name":
+                case "search_track_by_name_with_spotify_api":
                     resolved = False
 
                     artist = arguments["artist"]
