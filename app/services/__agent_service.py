@@ -8,6 +8,7 @@ load_dotenv()
 
 
 TOOLS = [
+    # TODO: Function Tool Speak To User. Questa funzione permettera' di parlare con l'utente e di chiedere informazioni
     {
         "type": "function",
         "function": {
@@ -27,6 +28,7 @@ TOOLS = [
             }
         }
     },
+    # TODO: Function Tool Get User Playlists
     {
         "type": "function",
         "function":  {
@@ -34,6 +36,7 @@ TOOLS = [
             "description": "Use this to get the user playlists",
         }
     },
+    # TODO: Function Tool Search Track By Name With Spotify Api per cercare la Traccia su spotify
     {
         "type": "function",
         "function":  {
@@ -58,8 +61,8 @@ TOOLS = [
             }
         }  
     },
-    openai.pydantic_function_tool(Playlist, name="create_or_update_playlist" , description="Use this function to create a playlist. Before using this function, use search_track_by_name_with_spotify_api to search a track to get track uri."),
-
+    # TODO: Function Tool Create Or Update Playlist Funzione per creare o aggiornare la playlist questa funzione prendera' come formato di dati in input un oggetto di tipo playlist 
+    openai.pydantic_function_tool(Playlist, name="create_or_update_playlist" , description="Use this function to create a playlist. Before using this function, use search_track_by_name_with_spotify_api to search a track to get track uri.")
 ]
 
 GPT_MODEL = "gpt-4o"
@@ -126,7 +129,7 @@ class AgentService():
                 model = GPT_MODEL,
                 messages = messages,
                 temperature = 0.5,
-                tools = TOOLS,
+                # tools = TOOLS,
                 tool_choice="required"
             )
 
@@ -152,23 +155,13 @@ class AgentService():
 
                 case "get_user_playlists":
                     resolved = False
-                    print("Executing 'get_user_playlists'")
 
                     playlists = Spotify().get_user_playlists()
 
                     content = json.dumps(playlists)
 
-                case "add_playlist_to_spotify":
-                    resolved = False
-
-                    result = Spotify().save_playlist(
-                        name = arguments['name'],
-                        playlist = arguments['tracks']   
-                    )
-
-                    content = json.dumps(result)
-
                 case "create_or_update_playlist":
+
                     resolved = False
 
                     self.playlist = arguments
@@ -179,26 +172,44 @@ class AgentService():
                 case "search_track_by_name_with_spotify_api":
                     resolved = False
 
+                    # TODO: prendiamo l'artista e il nome della traccia passati come argomenti
                     artist = arguments["artist"]
                     track_name = arguments["track_name"]
 
-                    search_q = f"remaster%2520track%3A{track_name}%2520artist:{artist}"
+                    # TODO: creiamo la query per la ricerca su spotify
                     # remaster%2520track%3ADoxy%2520artist%3AMiles%2520Davis
+                    search_q = f"remaster%2520track%3A{track_name}%2520artist:{artist}" 
+
+                    # TODO: eseguiamo la ricerca su spotify
                     r = Spotify().sp.search(
                         q = search_q,
                         type = "track",
                         limit = 5
                     )
 
+                    # TODO: chiediamo a GPT di selezionare la traccia corretta e impostiamo il modello della risposta come oggetto SpotifyTrack
                     completion = self.client.beta.chat.completions.parse(
                         model=GPT_MODEL,
                         messages=[
+                            # il messaggio che passo al modello deve contenere la risposta di spotify
                             {"role": "system", "content": "Data la seguente risposta da un'api di spotify seleziona la traccia corretta. Spotify API Response : \n" + json.dumps(r)}
                         ],
+                        # il tipo di risposta che aspetto
                         response_format=SpotifyTrack,
                     )
 
+                    # TODO: Prendiamo il contenuto della risposta e lo inseriamo nel contenuto della risposta
                     content = json.dumps(completion.choices[0].message.content)
+
+                case "add_playlist_to_spotify":
+                    resolved = False
+
+                    result = Spotify().save_playlist(
+                        name = arguments['name'],
+                        playlist = arguments['tracks']   
+                    )
+
+                    content = json.dumps(result)
 
 
             self.conversation_messages.append(
