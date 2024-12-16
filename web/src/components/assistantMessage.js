@@ -6,8 +6,8 @@ export default function AssistantMessage(message) {
                 <div class="flex items-center space-x-2 rtl:space-x-reverse">
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">SpotiGiPify</span>
                 </div>
-                <p class="text-sm font-normal py-2.5 text-gray-900 dark:text-white">{message}</p>
+                <p class="text-sm font-normal py-2.5 text-gray-900 dark:text-white">${message}</p>
             </div>
         </div>
-    `).replace(/{message}/g, message)
+    `)
 }

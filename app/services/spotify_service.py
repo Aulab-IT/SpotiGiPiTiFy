@@ -47,7 +47,7 @@ class Spotify():
 
         p_id = next((p['id'] for p in self.sp.user_playlists(user_id)['items'] if p['name'] == name), None)
         
-        tracks = [track.uri for track in playlist]
+        tracks = [track['uri'] for track in playlist]
         print(f"Adding tracks: {tracks}")
         self.sp.user_playlist_add_tracks(user=user_id, playlist_id=p_id, tracks=tracks)
 

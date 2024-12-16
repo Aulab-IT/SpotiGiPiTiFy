@@ -2,3 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    /* width */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    /* Track */
+    ::-webkit-scrollbar-track {
+        @apply bg-spotify-grey;
+    }
+    
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+        @apply bg-gray-600;
+    }
+    
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-800
+    }
+}

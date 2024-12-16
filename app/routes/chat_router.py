@@ -1,18 +1,28 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from app.services.openai_service import OpenAIService
+from app.services.agent_service import AgentService
 from app.services.spotify_service import Spotify
 router = APIRouter()
 
-
-class ChatComplentionRequest(BaseModel):
+class SpotifyAssistantRequest(BaseModel):
     messages : list
+    playlist : dict
 
 
+@router.post("/spotify-assistant")
+def spotify_assistant(request : SpotifyAssistantRequest):
+    agent = AgentService(
+        conversation_messages = request.messages,
+        playlist = request.playlist
+    )
 
 
-@router.post("/test")
-def test():
+    response = agent.spotify_assistant()
+
+    return response
+
+@router.post("/test/search")
+def search():
     search_q = "{} artist {}".format('Enter Sandman', "Metallica")
     r = Spotify().sp.search(
         q = search_q,
@@ -26,12 +36,8 @@ def test():
 
     return r
 
-@router.post("/completion")
-def chat_completion(request : ChatComplentionRequest):
-    openai = OpenAIService()
+@router.post("/test/user_tracks")
+def test():
+    r = Spotify().get_current_user_saved_tracks()
 
-    response = openai.spotify_assistant(
-        conversation_messages = request.messages
-    )
-
-    return response
+    return r

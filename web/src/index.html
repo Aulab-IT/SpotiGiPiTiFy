@@ -7,8 +7,16 @@
 
     <link href="../dist/output.css" rel="stylesheet">
   </head>
-  <body class="dark bg-spotify-background"> 
-    <div class="max-w-2xl mx-auto h-screen flex flex-col justify-between">
+  <body class="dark bg-spotify-background flex "> 
+    <div class="max-w-2xl w-full mx-auto h-screen flex flex-col justify-between px-2 pb-8">
+      <h1 class="text-3xl text-white mt-8">Crea la tua playlist con GPT</h1>
+
+      <div id="playlist-response" class="flex-1 w-full overflow-y-auto overflow-x-hidden bg-slate-200 dark:bg-spotify-dark-grey rounded-lg mt-8 px-2">
+
+
+      </div>
+    </div>
+    <div class="max-w-2xl w-full mx-auto h-screen flex flex-col justify-between">
       <div id="response" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-200 dark:bg-spotify-dark-grey rounded-lg mt-8 px-2">
 
 
@@ -22,8 +30,6 @@
             </button>
         </div>
     </form>
-    
-
   </div>
   
     <script src="https://unpkg.com/flowbite@1.4.0/dist/flowbite.js"></script>

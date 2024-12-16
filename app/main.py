@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from app.routes import chat_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.services.spotify_service import Spotify
 
 app = FastAPI()
 
