@@ -46,9 +46,12 @@ async function formSubmit(e) {
 
     const data = await response.json();
 
+    
     messages = data.messages
     playlist = data.playlist
-
+    
+    console.log(messages);
+    
     renderMessages()
     renderPlaylist()
 }

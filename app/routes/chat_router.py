@@ -19,7 +19,6 @@ def spotify_assistant(request : SpotifyAssistantRequest):
         playlist = request.playlist
     )
 
-
     response = agent.spotify_assistant()
 
     return response

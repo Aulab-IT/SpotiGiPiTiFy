@@ -6,9 +6,9 @@ from app.models.spotify_models import Playlist , SpotifyTrack
 load_dotenv()
 
 
+API_KEY = "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"
 
 TOOLS = [
-    # TODO: Function Tool Speak To User. Questa funzione permettera' di parlare con l'utente e di chiedere informazioni
     {
         "type": "function",
         "function": {
@@ -29,10 +29,40 @@ TOOLS = [
         }
     },
     # TODO: Function Tool Get User Playlists
-
+    {
+       "type": "function",
+        "function":  {
+            "name": "get_user_playlists",
+            "description": "Use this to get the user playlists",
+        }
+    },
     # TODO: Function Tool Search Track By Name With Spotify Api per cercare la Traccia su spotify
-    
+    {
+        "type": "function",
+        "function": {
+            "name" : "search_track_by_name_with_spotify_api",
+            "description": "Search for a track by name and artist in spotify. You can use this function to search a track before adding it to the playlist.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "artist": {
+                        "type": "string",
+                        "description": "Name of the artist"
+                    },
+                    "track_name": {
+                        "type": "string",
+                        "description": "Name of the track"
+                    }
+                },
+                "required": [
+                    "artist",
+                    "track_name"
+                ]
+            }
+        }
+    },
     # TODO: Function Tool Create Or Update Playlist Funzione per creare o aggiornare la playlist questa funzione prendera' come formato di dati in input un oggetto di tipo playlist 
+    openai.pydantic_function_tool(Playlist, name="create_or_update_playlist" , description="Use this function to create a playlist. Before using this function, use search_track_by_name_with_spotify_api to search a track to get track uri.")
 
 ]
 
@@ -76,7 +106,7 @@ class AgentService():
 
     def __init__(self , conversation_messages , playlist):
         self.client = OpenAI(
-            api_key = os.getenv("OPENAI_API_KEY")
+            api_key = API_KEY
         )
 
         self.playlist = playlist
@@ -104,6 +134,7 @@ class AgentService():
                 tool_choice="required"
             )
 
+
             self.conversation_messages.append(response.choices[0].message)
 
             resolved = self.execute_function(
@@ -114,7 +145,23 @@ class AgentService():
         return {"messages" : self.conversation_messages , "playlist" : self.playlist}
 
     def execute_function(self, function_calls):
+        """
+        execute_function esegue una funzione passata come argomento e restituisce il contenuto della risposta
+        come stringa JSON.
+        
+        La funzione prende come argomento un elenco di funzioni da eseguire, ogni funzione 
+        e' identificata da un id e da un nome che rappresenta la funzione da chiamare, 
+        inoltre contiene un elenco di argomenti che devono essere passati alla funzione.
+        
+        La funzione restituisce True se la funzione e' stata eseguita correttamente, False altrimenti.
+        
+        Ad esempio se viene passata la funzione "speak_to_user" con argomento "Ciao come stai?"
+        la funzione esegue la chiamata alla funzione "speak_to_user" con argomento "Ciao come stai?" e
+        restituisce la risposta come stringa JSON.
+        """
+        
         for function_call in function_calls:
+            print(f"execute_function: {function_call}")
             function_id = function_call.id
             function_name = function_call.function.name
             arguments = json.loads(function_call.function.arguments)
@@ -125,35 +172,56 @@ class AgentService():
                     content = arguments["message"]
 
                 case "get_user_playlists":
-                    pass
+                    resolved = False
                     # TODO: prendere le playlist dell'utente tramite la funzione get_user_playlists
-
+                    playlists = Spotify().get_user_playlists()
+                    print(f"execute_function: playlists = {playlists}")
                     # TODO: la risposta sara' le playlist dell'utente
-
+                    content = json.dumps(playlists)
                 case "create_or_update_playlist":
-                    pass
+                    print(f"execute_function: create_or_update_playlist")
+                    resolved = False
                     # TODO : impostiamo self.playlist con il contenuto di arguments che sara' la playlist con i brani 
-
+                    self.playlist = arguments
                     # TODO: impostiamo come content un semplice messaggio di risposta.
-
+                    content = "Playlist aggiornata correttamente"
                 case "search_track_by_name_with_spotify_api":
-                    pass
+                    resolved = False
                     # TODO: prendiamo l'artista e il nome della traccia passati come argomenti
-
+                    artist = arguments["artist"]
+                    track_name = arguments["track_name"]
+                    print(f"execute_function: artist = {artist}, track_name = {track_name}")
                     # TODO: creiamo la query per la ricerca su spotify
                     # remaster%2520track%3A{Doxy}%2520artist%3A{Miles Davis}
+                    query = f"remaster%2520track%3A{track_name}%2520artist%3A{artist}"
 
                     # TODO: eseguiamo la ricerca su spotify mandando i seguenti argomenti 
                     # q = query
                     # type = track
                     # limit = 5
+                    response = Spotify().sp.search(
+                        q = query,
+                        type = "track",
+                        limit = 5
+                    )
 
-                    
+                    print(f"execute_function: search response = {response}")
 
                     # TODO: chiediamo a GPT di selezionare la traccia corretta e impostiamo il modello della risposta come oggetto SpotifyTrack
-
+                    gptResponse = self.client.beta.chat.completions.parse(
+                                    model = GPT_MODEL,
+                                    messages = [
+                                        {"role" : "system" , "content" : "Sei un assistente che deve inidividuare la traccia corretta da un elenco di brani. L'elenco di brani e' una chiamata alle api di Spotify. "},
+                                        {"role" : "user" , "content" : f"Quale traccia devi scegliere tra {json.dumps(response)}?"}
+                                    ],
+                                    temperature = 0.2,
+                                    response_format=SpotifyTrack
+                                )
+                    
+                    print(f"execute_function: gptResponse = {gptResponse.choices[0].message.content}")
+                    
                     # TODO: Prendiamo il contenuto della risposta e lo inseriamo nel contenuto della risposta
-
+                    content = json.dumps(gptResponse.choices[0].message.content)
 
 
             self.conversation_messages.append(
